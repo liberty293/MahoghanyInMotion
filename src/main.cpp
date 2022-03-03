@@ -16,7 +16,7 @@
 //#define STEP 14 // for stepper motor orange
 //#define DIR 15 // for stepper motor yellow
 #define TEAMPOTPIN A6
-#define speed_value 60
+#define speed_value 135
 #define GGTIME 250000000
 //#define GGTIME 20000000
 
@@ -28,8 +28,8 @@
 #define Right_Line 6
 
 uint32_t MoveToSheepTime = 1000; //Time in miliseconds
-uint32_t TurnTime90 = 500;
-uint32_t TurnTIme45 = 250;
+uint32_t TurnTime90 = 1000;
+uint32_t TurnTIme45 = 500;
 
 /*---------------Module Function Prototypes-----------------*/
 //handle state functions
@@ -58,8 +58,10 @@ bool OnLine(int line);
 
 
 /*---------------State Definitions--------------------------*/
-typedef enum {WAITING, GO_TO_SHEEP_RED, GO_TO_SHEEP,GG, AT_SHEEP, GO_TO_LINE, LINE_FOLLOW
-, AT_INTERSECT} States_t;
+typedef enum {
+    WAITING, GO_TO_SHEEP_RED, GO_TO_SHEEP, GG, AT_SHEEP, GO_TO_LINE, LINE_FOLLOW
+    , TURN90, TURN45
+} States_t;
 
 
 /*---------------Module Variables---------------------------*/
@@ -71,218 +73,250 @@ int teamcolorval;
 uint32_t currentmillis;
 bool isRed = false;
 int intersectNum = 0;
+bool timer = false;
 
 /*---------------Main Functions----------------*/
 
 void setup() {
-  pinMode(ENA_L, OUTPUT);
-  pinMode(ENB_R, OUTPUT);
-  pinMode(IN1_L, OUTPUT);
-  pinMode(IN2_L, OUTPUT);
-  pinMode(IN3_R, OUTPUT);
-  pinMode(IN4_R, OUTPUT);
-  //pinMode(DIR, OUTPUT);
-  //pinMode(STEP, OUTPUT);
-  pinMode(BLUELED, OUTPUT);
-  pinMode(REDLED, OUTPUT);
-  pinMode(WAITINGLED, OUTPUT);
-  pinMode(TEAMPOTPIN, INPUT);
-  pinMode(Left_Line,INPUT);
-  pinMode(LeftCenter_Line, INPUT); 
-  pinMode(Center_Line,INPUT) ;
-  pinMode(RightCenter_Line,INPUT) ;
-  pinMode(Right_Line,INPUT) ;
-  state = WAITING;
-  GGtimer.begin(handleGG,GGTIME);
-  //doorStepper.setMaxSpeed(1000);
-  //doorStepper.setSpeed(1000);
-  Serial.begin(9600);
- // stepper.begin(1, 1);
-
+    pinMode(ENA_L, OUTPUT);
+    pinMode(ENB_R, OUTPUT);
+    pinMode(IN1_L, OUTPUT);
+    pinMode(IN2_L, OUTPUT);
+    pinMode(IN3_R, OUTPUT);
+    pinMode(IN4_R, OUTPUT);
+    //pinMode(DIR, OUTPUT);
+    //pinMode(STEP, OUTPUT);
+    pinMode(BLUELED, OUTPUT);
+    pinMode(REDLED, OUTPUT);
+    pinMode(WAITINGLED, OUTPUT);
+    pinMode(TEAMPOTPIN, INPUT);
+    pinMode(Left_Line, INPUT);
+    pinMode(LeftCenter_Line, INPUT);
+    pinMode(Center_Line, INPUT);
+    pinMode(RightCenter_Line, INPUT);
+    pinMode(Right_Line, INPUT);
+    state = WAITING;
+    GGtimer.begin(handleGG, GGTIME);
+    //doorStepper.setMaxSpeed(1000);
+    //doorStepper.setSpeed(1000);
+    Serial.begin(9600);
+    // stepper.begin(1, 1);
+    currentmillis = millis();
 }
-void loop(){
-driveForward(speed_value);
-Serial.println(digitalRead(LeftCenter_Line));
-//  closeDoor();
- // Serial.println(analogRead(Left_Line));
- // lineFollow();
-//turnLeft(speed_value);
- //doorStepper.runSpeed();
- //Serial.println(doorStepper.currentPosition());
-  switch (state) {
-    case WAITING:
-      handleWaiting();
-      break;
-    // case GO_TO_SHEEP:
-    //   handleGoToSheep();
-    //   break;
-    // case GO_TO_SHEEP_RED:
-    //   handleGoToRedSheep();
-    // case AT_SHEEP:
-    //   handleAtSheep();
-    //   break;
-    case GO_TO_LINE:
-      handleGoToLine();
-    case LINE_FOLLOW:
-      lineFollow();
-    case AT_INTERSECT:
-      // if (intersectNum ==1){ //ignore the first intersection
-      //   //if(isRed) turnLeft(speed_value);
-      //   //else turnRight(speed_value);
-      //   // currentmillis = millis();
-      //   // if(millis() - currentmillis > TurnTime90){
-      //   //   state=LINE_FOLLOW;
-      //   // }
-      //   driveForward(speed_value);
-      // }
+void loop() {
+    // Serial.println( digitalRead(Left_Line));
+     //Serial.println("Right:" + digitalRead(RightCenter_Line));
+    turnLeft90(speed_value);
 
-        if (intersectNum ==1){
-        if(isRed) turnRight(speed_value);
-        else turnLeft(speed_value);
+    if (millis() - currentmillis > TurnTime90) {
+        stopDriving();
+        delay(1000);
         currentmillis = millis();
-        if(millis() - currentmillis > TurnTime90){
-          state=LINE_FOLLOW;
-        }
-      }
-        
-        else if (intersectNum ==3){
-        if(isRed) turnLeft(speed_value);
-        else turnRight(speed_value);
-        currentmillis = millis();
-        if(millis() - currentmillis > TurnTIme45){
-          state=LINE_FOLLOW;
-        }
-      }
+    }
+    //lineFollow();
+    //Serial.println(digitalRead(LeftCenter_Line));
+    ////  closeDoor();
+    // // Serial.println(analogRead(Left_Line));
+    // // lineFollow();
+    ////turnLeft(speed_value);
+    // //doorStepper.runSpeed();
+    // //Serial.println(doorStepper.currentPosition());
+    //  switch (state) {
+    //    case WAITING:
+    //      handleWaiting();
+    //      break;
+    //    // case GO_TO_SHEEP:
+    //    //   handleGoToSheep();
+    //    //   break;
+    //    // case GO_TO_SHEEP_RED:
+    //    //   handleGoToRedSheep();
+    //    // case AT_SHEEP:
+    //    //   handleAtSheep();
+    //    //   break;
+    //    case GO_TO_LINE:
+    //      handleGoToLine();
+    //    case LINE_FOLLOW:
+    //      lineFollow();
+    //    case TURN90:
+    //        if(isRed) turnRight90(speed_value);
+    //        else turnLeft90(speed_value);
+    //        if(!timer)
+    //        {currentmillis = millis();
+    //        timer = true;
+    //          }
+    //        if(millis() - currentmillis > TurnTime90){
+    //          timer = false;
+    //          state=LINE_FOLLOW;
+    //        }
+    //      
+    //    case TURN45:
 
-        else if(intersectNum>=4){
-          driveForward(speed_value);
-        }         
-      
-    case GG:
-      stopDriving();
-      break;
-    default:    // Should never get into an unhandled state
-      Serial.println("What is this I do not even...");
-  }
+    //        if(isRed) turnLeft90(speed_value);
+    //        else turnRight90(speed_value);
+    //        if(!timer)
+    //        {currentmillis = millis();
+    //        timer = true;
+    //          }
+    //        if(millis() - currentmillis > TurnTIme45){
+     //           timer = false;
+    //          state=LINE_FOLLOW;
+    //        }
+    //      }
+    //
+    //        else if(intersectNum>=4){
+    //          driveForward(speed_value);
+    //        }         
+    //      
+    //    case GG:
+    //      stopDriving();
+    //      break;
+    //    default:    // Should never get into an unhandled state
+    //      Serial.println("What is this I do not even...");
+    //  }
 }
 
 
 
 /*----------------Module Functions--------------------------*/
 int potRead(int pin) { // reads a potentiometer value and returns a value from 0 to 100
-  potval = analogRead(pin);            
-  return map(potval,0,1023,0,100);
+    potval = analogRead(pin);
+    return map(potval, 0, 1023, 0, 100);
 }
 
-void handleWaiting(void){
-    digitalWrite(REDLED,LOW);
-    digitalWrite(BLUELED,LOW);
-    digitalWrite(WAITINGLED,HIGH);
-    if (potRead(TEAMPOTPIN)>=75){
-       isRed = false;
-       digitalWrite(BLUELED,HIGH);
-       digitalWrite(WAITINGLED,LOW);
-     }
-    if (potRead(TEAMPOTPIN)<=25){
-       isRed = true;
-       digitalWrite(REDLED,HIGH);
-       digitalWrite(WAITINGLED,LOW);
-     }
-     state = GO_TO_LINE;
+void handleWaiting(void) {
+    digitalWrite(REDLED, LOW);
+    digitalWrite(BLUELED, LOW);
+    digitalWrite(WAITINGLED, HIGH);
+    if (potRead(TEAMPOTPIN) >= 75) {
+        isRed = false;
+        digitalWrite(BLUELED, HIGH);
+        digitalWrite(WAITINGLED, LOW);
+    }
+    if (potRead(TEAMPOTPIN) <= 25) {
+        isRed = true;
+        digitalWrite(REDLED, HIGH);
+        digitalWrite(WAITINGLED, LOW);
+    }
+    state = GO_TO_LINE;
 
 }
 
-void handleGoToLine(void){
-  driveForward(speed_value);
-  if(OnLine(Center_Line) && !OnLine(LeftCenter_Line))
-    state = LINE_FOLLOW;
+void handleGoToLine(void) {
+    driveForward(speed_value);
+    if (OnLine(Center_Line) && !OnLine(LeftCenter_Line))
+        state = LINE_FOLLOW;
 }
 
 
-void handleGG(void){ // all motors off, all LEDs off
-    digitalWrite(REDLED,LOW);
-    digitalWrite(BLUELED,LOW);
-    digitalWrite(WAITINGLED,LOW);
+void handleGG(void) { // all motors off, all LEDs off
+    digitalWrite(REDLED, LOW);
+    digitalWrite(BLUELED, LOW);
+    digitalWrite(WAITINGLED, LOW);
     state = GG;
 }
 
-void driveForward(int speed){//moves robot forward
-  Serial.println("fwd");
-  digitalWrite(IN1_L, LOW);
-  digitalWrite(IN2_L, HIGH);
-  digitalWrite(IN3_R, HIGH);
-  digitalWrite(IN4_R, LOW);
-  analogWrite(ENA_L, speed);
-  analogWrite(ENB_R, speed);
+void driveForward(int speed) {//moves robot forward
+    Serial.println("fwd");
+    digitalWrite(IN1_L, LOW);
+    digitalWrite(IN2_L, HIGH);
+    digitalWrite(IN3_R, HIGH);
+    digitalWrite(IN4_R, LOW);
+    analogWrite(ENA_L, speed);
+    analogWrite(ENB_R, 0.6 * speed);
 }
 
 
-void driveBackward(int speed){ // moves robot backward
-  Serial.println("backwards");
-  digitalWrite(IN2_L, HIGH);
-  digitalWrite(IN1_L, LOW);
-  digitalWrite(IN4_R, HIGH);
-  digitalWrite(IN3_R, LOW);
-  analogWrite(ENA_L, speed);
-  analogWrite(ENB_R, speed);
+void driveBackward(int speed) { // moves robot backward
+    Serial.println("backwards");
+    digitalWrite(IN2_L, HIGH);
+    digitalWrite(IN1_L, LOW);
+    digitalWrite(IN4_R, HIGH);
+    digitalWrite(IN3_R, LOW);
+    analogWrite(ENA_L, speed);
+    analogWrite(ENB_R, speed);
 }
 
-void stopDriving(void){ // stops driving motors
-  Serial.println("Good Game");
-  analogWrite(ENA_L, 0);
-  analogWrite(ENB_R, 0);
-  
+void stopDriving(void) { // stops driving motors
+    Serial.println("Good Game");
+    analogWrite(ENA_L, 0);
+    analogWrite(ENB_R, 0);
+
 }
 
-void turnLeft(int speed){ // turns robot right
-  digitalWrite(IN3_R, HIGH);
-  digitalWrite(IN4_R, LOW);
-  digitalWrite(IN1_L, HIGH);
-  digitalWrite(IN2_L, LOW);
-  analogWrite(ENA_L, speed);
-  analogWrite(ENB_R, speed);
+void turnLeft(int speed) { // turns robot right
+    Serial.println("left");
+    digitalWrite(IN1_L, LOW);
+    digitalWrite(IN2_L, HIGH);
+    digitalWrite(IN3_R, HIGH);
+    digitalWrite(IN4_R, LOW);
+    analogWrite(ENA_L, .8 * speed);
+    analogWrite(ENB_R, 0.6 * speed);
 }
 
-void turnRight(int speed){ // turns robot left Right wheel forward; left wheel back
-  digitalWrite(IN4_R, HIGH);
-  digitalWrite(IN3_R, LOW);
-  digitalWrite(IN2_L, HIGH);
-  digitalWrite(IN1_L, LOW);
-  analogWrite(ENA_L, speed);
-  analogWrite(ENB_R, speed);
+void turnLeft90(int speed) {
+    digitalWrite(IN2_L, LOW);
+    digitalWrite(IN1_L, HIGH);
+    digitalWrite(IN3_R, HIGH);
+    digitalWrite(IN4_R, LOW);
+    analogWrite(ENA_L, speed);
+    analogWrite(ENB_R, 0.6 * speed);
 }
 
-void lineFollow(void){ // line following
+void rightTurn90(int speed) {
+    digitalWrite(IN1_L, LOW);
+    digitalWrite(IN2_L, HIGH);
+    digitalWrite(IN4_R, HIGH);
+    digitalWrite(IN3_R, LOW);
+    analogWrite(ENA_L, speed);
+    analogWrite(ENB_R, 0.6 * speed);
+}
+
+void turnRight(int speed) { // turns robot left Right wheel forward; left wheel back
+    Serial.println("right");
+    digitalWrite(IN1_L, LOW);
+    digitalWrite(IN2_L, HIGH);
+    digitalWrite(IN3_R, HIGH);
+    digitalWrite(IN4_R, LOW);
+    analogWrite(ENA_L, speed);
+    analogWrite(ENB_R, .78 * 0.6 * speed);
+}
+
+void lineFollow(void) { // line following
 //if center sensor reads black move forward
 //if corner sensors read black then we're at an intersection
-if(OnLine(Center_Line))
-{
-  driveForward(speed_value);
-  if(OnLine(Right_Line) || OnLine(Left_Line))
+    if (OnLine(Center_Line))
     {
-      intersectNum++;
-      state = AT_INTERSECT;
-      //if(isRed) turnLeft(speed_value);
-      //else turnRight(speed_value);
+        driveForward(speed_value);
+        if (OnLine(RightCenter_Line) || OnLine(LeftCenter_Line))
+        {
+            state = TURN90;
+            //if(isRed) turnLeft(speed_value);
+            //else turnRight(speed_value);
+        }
+
+        if (OnLine(Right_Line) || OnLine(Left_Line))
+        {
+            state = TURN45;
+
+        }
+
     }
 
+    else //if not on a line, turn towards line
+    {
+        //if left sensor reads black, turn left
+        if (OnLine(LeftCenter_Line))
+            turnLeft(speed_value);
+
+        //if right sensor reads black, turn right
+        if (OnLine(RightCenter_Line))
+            turnRight(speed_value);
+    }
 }
 
-else //if not on a line, turn towards line
-{
-//if left sensor reads black, turn left
-  if(OnLine(LeftCenter_Line))
-    turnLeft(speed_value);
-
-//if right sensor reads black, turn right
-  if(OnLine(RightCenter_Line))
-    turnRight(speed_value);
-}
-}
-
-bool OnLine(int line){
-  if (digitalRead(line) == 1)
-    return true;
-  else
-    return false;
+bool OnLine(int line) {
+    if (digitalRead(line) == 1)
+        return true;
+    else
+        return false;
 }
