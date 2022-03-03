@@ -212,8 +212,8 @@ void driveForward(int speed){//moves robot forward
   digitalWrite(IN2_L, HIGH);
   digitalWrite(IN3_R, HIGH);
   digitalWrite(IN4_R, LOW);
-  analogWrite(ENA_L, 600);
-  analogWrite(ENB_R, 600);
+  analogWrite(ENA_L, speed);
+  analogWrite(ENB_R, speed);
 }
 
 
