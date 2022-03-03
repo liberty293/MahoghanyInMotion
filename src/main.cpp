@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <A4988.h>
 #include <SPI.h>
-#include <AccelStepper.h>
+//#include <AccelStepper.h>
 /*---------------Module Defines-----------------------------*/
 #define REDLED 23
 #define BLUELED 22
@@ -12,9 +12,9 @@
 #define IN4_R 17 //controls right wheel dir yellow 
 #define IN2_L 16 //controls left wheel dir orange
 #define ENA_L 3 //left wheel PWM black
-#define ENB_R 4 //right wheel PWM white
-#define STEP 14 // for stepper motor orange
-#define DIR 15 // for stepper motor yellow
+#define ENB_R 4 //right wheel PWM purple
+//#define STEP 14 // for stepper motor orange
+//#define DIR 15 // for stepper motor yellow
 #define TEAMPOTPIN A6
 #define speed_value 60
 #define GGTIME 250000000
@@ -27,13 +27,9 @@
 #define RightCenter_Line 7
 #define Right_Line 6
 
-#define MS1 10
-#define MS2 11
-#define MS3 12
 uint32_t MoveToSheepTime = 1000; //Time in miliseconds
 uint32_t TurnTime90 = 500;
 uint32_t TurnTIme45 = 250;
-
 
 /*---------------Module Function Prototypes-----------------*/
 //handle state functions
@@ -53,8 +49,6 @@ void stopAllMotors(void);
 void turnRight(int speed);
 void turnLeft(int speed);
 void lineFollow(void);
-void openDoor(void);
-void closeDoor(void);
 
 //additional useful functions
 int potRead(int pin);
@@ -73,7 +67,7 @@ IntervalTimer GGtimer;
 States_t state;
 int potval;
 int teamcolorval;
-AccelStepper doorStepper(1, STEP, DIR);
+//AccelStepper doorStepper(1, STEP, DIR);
 uint32_t currentmillis;
 bool isRed = false;
 int intersectNum = 0;
@@ -87,8 +81,8 @@ void setup() {
   pinMode(IN2_L, OUTPUT);
   pinMode(IN3_R, OUTPUT);
   pinMode(IN4_R, OUTPUT);
-  pinMode(DIR, OUTPUT);
-  pinMode(STEP, OUTPUT);
+  //pinMode(DIR, OUTPUT);
+  //pinMode(STEP, OUTPUT);
   pinMode(BLUELED, OUTPUT);
   pinMode(REDLED, OUTPUT);
   pinMode(WAITINGLED, OUTPUT);
@@ -100,13 +94,15 @@ void setup() {
   pinMode(Right_Line,INPUT) ;
   state = WAITING;
   GGtimer.begin(handleGG,GGTIME);
-  doorStepper.setMaxSpeed(1000);
-  doorStepper.setSpeed(1000);
+  //doorStepper.setMaxSpeed(1000);
+  //doorStepper.setSpeed(1000);
   Serial.begin(9600);
  // stepper.begin(1, 1);
 
 }
 void loop(){
+driveForward(speed_value);
+Serial.println(digitalRead(LeftCenter_Line));
 //  closeDoor();
  // Serial.println(analogRead(Left_Line));
  // lineFollow();
@@ -130,17 +126,17 @@ void loop(){
     case LINE_FOLLOW:
       lineFollow();
     case AT_INTERSECT:
-      if (intersectNum ==1){ //ignore the first intersection
-        //if(isRed) turnLeft(speed_value);
-        //else turnRight(speed_value);
-        // currentmillis = millis();
-        // if(millis() - currentmillis > TurnTime90){
-        //   state=LINE_FOLLOW;
-        // }
-        driveForward(speed_value);
-      }
+      // if (intersectNum ==1){ //ignore the first intersection
+      //   //if(isRed) turnLeft(speed_value);
+      //   //else turnRight(speed_value);
+      //   // currentmillis = millis();
+      //   // if(millis() - currentmillis > TurnTime90){
+      //   //   state=LINE_FOLLOW;
+      //   // }
+      //   driveForward(speed_value);
+      // }
 
-        else if (intersectNum ==2){
+        if (intersectNum ==1){
         if(isRed) turnRight(speed_value);
         else turnLeft(speed_value);
         currentmillis = millis();
@@ -197,7 +193,8 @@ void handleWaiting(void){
 }
 
 void handleGoToLine(void){
-  if(OnLine(Center_Line))
+  driveForward(speed_value);
+  if(OnLine(Center_Line) && !OnLine(LeftCenter_Line))
     state = LINE_FOLLOW;
 }
 
