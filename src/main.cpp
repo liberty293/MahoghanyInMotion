@@ -15,7 +15,7 @@
 #define ENA_L 3 //left wheel PWM black
 #define ENB_R 4 //right wheel PWM purple
 #define TEAMPOTPIN A6
-#define speed_value 60
+#define speed_value 110
 #define GGTIME 250000000
 #define Line_Threshold 4.0 //FILL THIS AND BELOW IN! 3.5-4.4
 #define Left_Line 10
@@ -24,6 +24,7 @@
 #define RightCenter_Line 7
 #define Right_Line 6
 #define TURN_TIME_INTERVAL 500
+#define offset .92
 
 
 /*---------------Module Function Prototypes-----------------*/
@@ -95,21 +96,26 @@ void loop(){
       handleWaiting();
       break;
     case IN_HOME:
+      Serial.println("HOME");
       driveForward(speed_value);
       break;
     case PLOWING:
+      Serial.println("Plowing");
       digitalWrite(REDLED,HIGH);
       digitalWrite(BLUELED,HIGH);
       digitalWrite(WAITINGLED,HIGH);
       driveForward(speed_value);
       break;
     case LINE_FOLLOW:
+      Serial.println("line following");
       driveForward(speed_value);
       break;
     case CW:
+      Serial.println("Turning CW");
       turnRight(speed_value);
       break;
     case CCW:
+      Serial.println("Turning CCW");
       turnLeft(speed_value); 
       break;     
     case GG:
@@ -141,7 +147,7 @@ void handleWaiting(void){
        digitalWrite(REDLED,HIGH);
        digitalWrite(WAITINGLED,LOW);
      }
-     state = PLOWING;
+     state = IN_HOME;
 
 }
 
@@ -159,7 +165,7 @@ void driveForward(int speed){//moves robot forward
   digitalWrite(IN3_R, HIGH);
   digitalWrite(IN4_R, LOW);
   analogWrite(ENA_L, speed);
-  analogWrite(ENB_R, speed);
+  analogWrite(ENB_R, offset*speed);
 }
 
 
@@ -170,7 +176,7 @@ void driveForward(int speed){//moves robot forward
 //   digitalWrite(IN4_R, HIGH);
 //   digitalWrite(IN3_R, LOW);
 //   analogWrite(ENA_L, speed);
-//   analogWrite(ENB_R, speed);
+//   analogWrite(ENB_R, offset*speed);
 // }
 
 void stopDriving(void){ // stops driving motors
@@ -186,7 +192,7 @@ void turnLeft(int speed){ // turns robot right
   digitalWrite(IN1_L, HIGH);
   digitalWrite(IN2_L, LOW);
   analogWrite(ENA_L, speed);
-  analogWrite(ENB_R, speed);
+  analogWrite(ENB_R, offset*speed);
 }
 
 void turnRight(int speed){ // turns robot left Right wheel forward; left wheel back
@@ -195,7 +201,7 @@ void turnRight(int speed){ // turns robot left Right wheel forward; left wheel b
   digitalWrite(IN2_L, HIGH);
   digitalWrite(IN1_L, LOW);
   analogWrite(ENA_L, speed);
-  analogWrite(ENB_R, speed);
+  analogWrite(ENB_R, offset*speed);
 }
 
 // void lineFollow(void){ // line following
